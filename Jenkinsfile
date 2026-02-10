@@ -34,6 +34,7 @@ pipeline {
         }
         stage('Test') {
             steps{
+                echo 'Running tests...'
                 sh 'mvn test'
             }
 
@@ -41,6 +42,7 @@ pipeline {
 
         stage('Checkstyle Analysis') {
             steps{
+                echo 'Running Checkstyle analysis...'
                 sh 'mvn checkstyle:checkstyle'
             }
         }   
