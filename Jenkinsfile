@@ -43,7 +43,7 @@ pipeline {
         stage('Checkstyle Analysis') {
             steps{
                 echo 'Running Checkstyle analysis...'
-                sh 'mvn checkstyle:checkstyle'
+                sh 'mvn -s settings.xml checkstyle:checkstyle'
             }
         }   
 
