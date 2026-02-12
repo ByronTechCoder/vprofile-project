@@ -59,18 +59,27 @@ jobs:
             sed -i "s/db01/${{ secrets.RDS_ENDPOINT }}/" src/main/resources/application.properties
 
 
-        - name: Build and publish to ECR
-          uses: appleboy/docker-ecr-action@master
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v4
           with:
-            access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            region: ${{ env.AWS_REGION }}
-            registry: ${{secrets.REGISTRY}}
-            repo: actapp
-            tags: latest, ${{github.run_number}}
-            daemon_off: false
-            dockerfile: ./Dockerfile
-            context: ./
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: ${{ env.AWS_REGION }}
+
+        - name: Login to Amazon ECR
+          id: login-ecr
+          uses: aws-actions/amazon-ecr-login@v2
+
+        - name: Build, tag, and push image to Amazon ECR
+          env:
+            ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+            ECR_REPOSITORY: actapp
+            IMAGE_TAG: ${{ github.run_number }}
+          run: |
+            docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+            docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           
 
 
