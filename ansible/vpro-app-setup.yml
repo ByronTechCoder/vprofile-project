@@ -7,10 +7,10 @@
   tasks:
     - name: Download latest VProfile.war from nexus
       get_url:
-        url: "http://{{nexusip}}:8081/repository/{{reponame}}/{{groupid}}/{{time}}/{{build}}/{{vprofile_version}}"
+        url: "http://{{nexusip}}:8081/repository/{{reponame}}/{{groupid}}/{{artifactid}}/{{vprofile_version}}/{{artifactid}}-{{vprofile_version}}.war"
         url_username: "{{USER}}"
         url_password: "{{PASS}}"
-        dest: "/tmp/vproapp-{{vprofile_version}}"
+        dest: "/tmp/{{artifactid}}-{{vprofile_version}}.war"
         timeout: 60
       register: wardeploy
       tags:
@@ -60,7 +60,7 @@
         block:
          - name: Deploy vprofile artifact
            copy:
-             src: "/tmp/vproapp-{{vprofile_version}}"
+            src: "/tmp/{{artifactid}}-{{vprofile_version}}.war"
              dest: /usr/local/tomcat8/webapps/ROOT.war
              remote_src: yes
            register: deploy_info
