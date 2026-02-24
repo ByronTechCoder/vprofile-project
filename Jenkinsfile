@@ -15,6 +15,8 @@ pipeline {
     }
     
     environment {
+        JAVA_HOME = tool 'OracleJDK8'
+        PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
         SNAP_REPO = 'vprofile-snapshot'
 		NEXUS_USER = 'admin'
 		NEXUS_PASS = 'admin123'
