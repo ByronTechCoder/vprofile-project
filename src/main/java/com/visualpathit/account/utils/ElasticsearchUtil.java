@@ -31,22 +31,19 @@ public class ElasticsearchUtil {
 	    String elasticsearchNode = components.getElasticsearchNode();
 	    LOGGER.info("elasticsearchHost ........{}", elasticsearchHost);
 	    LOGGER.info("elasticsearchPort ........{}", elasticsearchPort);
-    	TransportClient client = null;
-    	try {    	
-    	Settings settings = Settings.builder()    			
-    			.put("cluster.name",elasticsearchCluster)
-    			.put("node.name",elasticsearchNode)
-    			.build();
-    	client = new PreBuiltTransportClient(settings)
-                .addTransportAddress(
-                new InetSocketTransportAddress(
-                		new InetSocketAddress(elasticsearchHost, Integer.parseInt(elasticsearchPort))));
-
-        
-    	}
-    	catch (Exception e) {
-			LOGGER.error("Failed to create Elasticsearch client", e);
-		}
-    	return client;
+	    try {
+	    	Settings settings = Settings.builder()
+	    			.put("cluster.name", elasticsearchCluster)
+	    			.put("node.name", elasticsearchNode)
+	    			.build();
+	    	return new PreBuiltTransportClient(settings)
+	    			.addTransportAddress(
+	    					new InetSocketTransportAddress(
+	    							new InetSocketAddress(elasticsearchHost, Integer.parseInt(elasticsearchPort))));
+	    } catch (NumberFormatException e) {
+	    	throw new IllegalStateException("Invalid Elasticsearch port", e);
+	    } catch (RuntimeException e) {
+	    	throw new IllegalStateException("Failed to create Elasticsearch client", e);
+	    }
       }
 }

@@ -27,6 +27,14 @@ public class UserController {
     private static final String SEPARATOR = "--------------------------------------------";
     private static final String MODEL_USER_ATTR = "user";
     private static final String MODEL_RESULT_ATTR = "Result";
+    private static final String VIEW_REGISTRATION = "registration";
+    private static final String VIEW_LOGIN = "login";
+    private static final String VIEW_WELCOME = "welcome";
+    private static final String VIEW_INDEX_HOME = "index_home";
+    private static final String VIEW_USER_LIST = "userList";
+    private static final String VIEW_USER = "user";
+    private static final String VIEW_USER_UPDATE = "userUpdate";
+    private static final String VIEW_RABBIT = "rabbitmq";
     private static final String CACHE_HIT_MESSAGE = "Data is From Cache";
     private static final String CACHE_HIT_LOG = "Data is From Cache !!";
     private static final String DB_HIT_LOG = "Data is From Database";
@@ -48,7 +56,7 @@ public class UserController {
     @RequestMapping(value = "/registration", method = RequestMethod.GET)
     public final String registration(final Model model) {
         model.addAttribute("userForm", new User());
-             	return "registration";
+	    	return VIEW_REGISTRATION;
       }
     /** {@inheritDoc} */
     @RequestMapping(value = "/registration", method = RequestMethod.POST)
@@ -57,7 +65,7 @@ public class UserController {
     	
         userValidator.validate(userForm, bindingResult);
         if (bindingResult.hasErrors()) {
-            return "registration";
+	        return VIEW_REGISTRATION;
         }
 	    LOGGER.info("Registering user {}", userForm.getUsername());
         userService.save(userForm);
@@ -76,17 +84,17 @@ public class UserController {
         if (logout != null){
             model.addAttribute("message", "You have been logged out successfully.");
         }
-        return "login";
+	    return VIEW_LOGIN;
     }
     /** {@inheritDoc} */
     @RequestMapping(value = { "/", "/welcome"}, method = RequestMethod.GET)
     public final String welcome(final Model model) {
-        return "welcome";
+	    return VIEW_WELCOME;
     }
     /** {@inheritDoc} */
     @RequestMapping(value = { "/index"} , method = RequestMethod.GET)
     public final String indexHome(final Model model) {
-        return "index_home";
+	    return VIEW_INDEX_HOME;
     }
     @RequestMapping(value = "/users", method = RequestMethod.GET)
     public String getAllUsers(Model model)
@@ -95,7 +103,7 @@ public class UserController {
         List<User> users = userService.getList();
 	    LOGGER.info("All User Data:::{}", users);
         model.addAttribute("users", users);
-        return "userList";
+	    return VIEW_USER_LIST;
     }
     
     @RequestMapping(value = "/users/{id}", method = RequestMethod.GET)
@@ -103,7 +111,7 @@ public class UserController {
     {	
         if (id == null) {
         	LOGGER.warn("User id is missing");
-        	return "user";
+	        return VIEW_USER;
         }
 
         String result = "";
@@ -113,7 +121,7 @@ public class UserController {
         	logDataSource(CACHE_HIT_LOG, cachedUser.getFatherName(), result);
         	model.addAttribute(MODEL_USER_ATTR, cachedUser);
         	model.addAttribute(MODEL_RESULT_ATTR, result);
-        	return "user";
+            return VIEW_USER;
         }
 
         try {
@@ -128,7 +136,7 @@ public class UserController {
         } catch (NumberFormatException e) {
         	LOGGER.warn("Invalid user id {}", id, e);
         }
-        return "user";
+	    return VIEW_USER;
     }
     
     /** {@inheritDoc} */
@@ -137,30 +145,14 @@ public class UserController {
     	User user = userService.findByUsername(username); 
         LOGGER.info("User Data:::{}", user);
         model.addAttribute(MODEL_USER_ATTR, user);
-    	return "userUpdate";
+        return VIEW_USER_UPDATE;
     }
     @RequestMapping(value = { "/user/{username}"} , method = RequestMethod.POST)
     public final String userUpdateProfile(@PathVariable(value="username") String username,final @ModelAttribute("user") User userForm,final Model model) {
     	User user = userService.findByUsername(username);
-    	user.setUsername(userForm.getUsername());
-    	user.setUserEmail(userForm.getUserEmail());
-    	user.setDateOfBirth(userForm.getDateOfBirth());
-    	user.setFatherName(userForm.getFatherName());
-    	user.setMotherName(userForm.getMotherName());
-    	user.setGender(userForm.getGender());
-    	user.setLanguage(userForm.getLanguage());
-    	user.setMaritalStatus(userForm.getMaritalStatus());
-    	user.setNationality(userForm.getNationality());
-    	user.setPermanentAddress(userForm.getPermanentAddress());
-    	user.setTempAddress(userForm.getTempAddress());
-    	user.setPhoneNumber(userForm.getPhoneNumber());
-    	user.setSecondaryPhoneNumber(userForm.getSecondaryPhoneNumber());
-    	user.setPrimaryOccupation(userForm.getPrimaryOccupation());
-    	user.setSecondaryOccupation(userForm.getSecondaryOccupation());
-    	user.setSkills(userForm.getSkills());
-    	user.setWorkingExperience(userForm.getWorkingExperience());    	
+        applyUserForm(user, userForm);
     	userService.save(user); 
-    	return "welcome";
+        return VIEW_WELCOME;
     }
     
     @RequestMapping(value={"/user/rabbit"}, method={RequestMethod.GET})
@@ -169,21 +161,40 @@ public class UserController {
       for (int i = 0; i < 20; i++) {
         producerService.produceMessage(generateString());
       }
-      return "rabbitmq";
+	    return VIEW_RABBIT;
     }
     
     private static String generateString() {
-      String uuid = UUID.randomUUID().toString();
-      return "uuid = " + uuid;
+        return "uuid = " + UUID.randomUUID();
     }
 
-        private void logDataSource(String dataSource, String fatherName, String result) {
-        	LOGGER.info(SEPARATOR);
-        	LOGGER.info(dataSource);
-        	LOGGER.info(SEPARATOR);
-        	LOGGER.info("Father ::: {}", fatherName);
-        	LOGGER.info("Result ::: {}", result);
-        }
+    private void applyUserForm(User user, User userForm) {
+        user.setUsername(userForm.getUsername());
+        user.setUserEmail(userForm.getUserEmail());
+        user.setDateOfBirth(userForm.getDateOfBirth());
+        user.setFatherName(userForm.getFatherName());
+        user.setMotherName(userForm.getMotherName());
+        user.setGender(userForm.getGender());
+        user.setLanguage(userForm.getLanguage());
+        user.setMaritalStatus(userForm.getMaritalStatus());
+        user.setNationality(userForm.getNationality());
+        user.setPermanentAddress(userForm.getPermanentAddress());
+        user.setTempAddress(userForm.getTempAddress());
+        user.setPhoneNumber(userForm.getPhoneNumber());
+        user.setSecondaryPhoneNumber(userForm.getSecondaryPhoneNumber());
+        user.setPrimaryOccupation(userForm.getPrimaryOccupation());
+        user.setSecondaryOccupation(userForm.getSecondaryOccupation());
+        user.setSkills(userForm.getSkills());
+        user.setWorkingExperience(userForm.getWorkingExperience());
+    }
+
+    private void logDataSource(String dataSource, String fatherName, String result) {
+        LOGGER.info(SEPARATOR);
+        LOGGER.info(dataSource);
+        LOGGER.info(SEPARATOR);
+        LOGGER.info("Father ::: {}", fatherName);
+        LOGGER.info("Result ::: {}", result);
+    }
     
 
     

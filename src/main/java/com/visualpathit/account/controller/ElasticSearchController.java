@@ -27,6 +27,13 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 @Controller
 public class ElasticSearchController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticSearchController.class);
+    private static final String INDEX_USERS = "users";
+    private static final String TYPE_USER = "user";
+    private static final String INDEX_EMPLOYEE = "employee";
+    private static final String TYPE_ID = "id";
+    private static final String VIEW_ELASTICSEARCH_RESULT = "elasticeSearchRes";
+    private static final String MODEL_RESULT_ATTR = "res";
+    private static final String RESULT_USERS = "Users";
 
 	@Autowired
     private UserService userService;
@@ -37,9 +44,8 @@ public class ElasticSearchController {
     @RequestMapping(value="/user/elasticsearch", method=RequestMethod.GET)
     public String insert(final Model model) throws IOException {
     	List<User> users = userService.getList();
-    	String result ="";
     	for (User user : users) {
-        	IndexResponse response = elasticsearchUtil.transportClient().prepareIndex("users","user",  String.valueOf(user.getId()))
+    	    	IndexResponse response = elasticsearchUtil.transportClient().prepareIndex(INDEX_USERS, TYPE_USER, String.valueOf(user.getId()))
                 .setSource(jsonBuilder()
                         .startObject()
                         .field("name", user.getUsername())
@@ -52,30 +58,28 @@ public class ElasticSearchController {
                         .endObject()
                 )
                 .get();
-        String res =response.getResult().toString();
-	    LOGGER.info(res);
-        result="Users";
+        LOGGER.info("{}", response.getResult());
     	}
-    	model.addAttribute(result);
-        return "elasticeSearchRes";
+        model.addAttribute(MODEL_RESULT_ATTR, RESULT_USERS);
+        return VIEW_ELASTICSEARCH_RESULT;
         		
     }
 
     @RequestMapping(value="/rest/users/view/{id}", method=RequestMethod.GET)
     public String  view(@PathVariable final String id,final Model model) {
-        GetResponse getResponse = elasticsearchUtil.transportClient().prepareGet("users", "user", id).get();
+	    GetResponse getResponse = elasticsearchUtil.transportClient().prepareGet(INDEX_USERS, TYPE_USER, id).get();
 	    LOGGER.info("{}", getResponse.getSource());
         
-        model.addAttribute("res", getResponse.getSource().get("name"));
+        model.addAttribute(MODEL_RESULT_ATTR, getResponse.getSource().get("name"));
        
-        return "elasticeSearchRes";
+        return VIEW_ELASTICSEARCH_RESULT;
     }
     @RequestMapping(value="/rest/users/update/{id}", method=RequestMethod.GET)
     public String update(@PathVariable final String id,final Model model) throws IOException {
 
         UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.index("employee")
-                .type("id")
+        updateRequest.index(INDEX_EMPLOYEE)
+                .type(TYPE_ID)
                 .id(id)
                 .doc(jsonBuilder()
                         .startObject()
@@ -84,22 +88,22 @@ public class ElasticSearchController {
         try {
             UpdateResponse updateResponse = elasticsearchUtil.transportClient().update(updateRequest).get();
 	        LOGGER.info("{}", updateResponse.status());
-            model.addAttribute("res", updateResponse.status());
-            return "elasticeSearchRes";
+            model.addAttribute(MODEL_RESULT_ATTR, updateResponse.status());
+            return VIEW_ELASTICSEARCH_RESULT;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
 	        LOGGER.warn("Elasticsearch update interrupted", e);
         } catch (ExecutionException e) {
 	        LOGGER.error("Elasticsearch update failed", e);
         }
-        return "elasticeSearchRes";
+	    return VIEW_ELASTICSEARCH_RESULT;
     }
     @RequestMapping(value="/rest/users/delete/{id}", method=RequestMethod.GET)
     public String delete(@PathVariable final String id,final Model model) {
 
-        DeleteResponse deleteResponse =elasticsearchUtil.transportClient().prepareDelete("employee", "id", id).get();
-        LOGGER.info(deleteResponse.getResult().toString());
-        model.addAttribute("res", deleteResponse.getResult().toString());
-        return "elasticeSearchRes";
+	    DeleteResponse deleteResponse =elasticsearchUtil.transportClient().prepareDelete(INDEX_EMPLOYEE, TYPE_ID, id).get();
+	    LOGGER.info("{}", deleteResponse.getResult());
+	    model.addAttribute(MODEL_RESULT_ATTR, deleteResponse.getResult().toString());
+	    return VIEW_ELASTICSEARCH_RESULT;
     }
 }
