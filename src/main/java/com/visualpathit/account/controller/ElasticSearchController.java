@@ -107,7 +107,10 @@ public class ElasticSearchController {
             System.out.println(updateResponse.status());
             model.addAttribute("res", updateResponse.status());
             return "elasticeSearchRes";
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.out.println(e);
+        } catch (ExecutionException e) {
             System.out.println(e);
         }
         return "elasticeSearchRes";
