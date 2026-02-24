@@ -60,7 +60,7 @@
         block:
          - name: Deploy vprofile artifact
            copy:
-            src: "/tmp/{{artifactid}}-{{vprofile_version}}.war"
+             src: "/tmp/{{artifactid}}-{{vprofile_version}}.war"
              dest: /usr/local/tomcat8/webapps/ROOT.war
              remote_src: yes
            register: deploy_info
