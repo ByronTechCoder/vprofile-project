@@ -27,6 +27,7 @@ pipeline {
         SONARSERVER = 'sonarserver'
         SONARSCANNER = 'sonarscanner'
         NEXUSPASS = credentials('nexuspass')
+        MAVEN_OPTS = '-Xms256m -Xmx1024m'
     }
 
     stages {
