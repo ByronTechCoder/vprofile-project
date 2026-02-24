@@ -5,7 +5,6 @@ import junit.framework.Assert;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -20,7 +19,7 @@ public class RoleTest {
     public static final int EXPECTED_SIZE = 1;
     private Role role;
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
     	User user = new User();
         user.setId(1L);
         user.setUsername("Wahidkhan74");
@@ -35,14 +34,8 @@ public class RoleTest {
         role.setUsers(users);
     }
 
-    @After
-    public void tearDown() throws Exception {
-        System.out.println("Test Completed");
-
-    }
-
     @Test
-    public void testUserDetailsHappyFlow() throws Exception {
+    public void testUserDetailsHappyFlow() {
     	Assert.assertEquals(EXPECTED_ID, role.getId());
         Assert.assertEquals(EXPECTED_ROLENAME, role.getName());
         Assert.assertEquals(EXPECTED_SIZE,role.getUsers().size());

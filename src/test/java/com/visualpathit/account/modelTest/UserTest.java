@@ -5,7 +5,6 @@ import junit.framework.Assert;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -22,7 +21,7 @@ public class UserTest {
     public static final String EXPECTED_USEREMAIL = "XXXXX@gmail.com";
     private User user;
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
     	   	
     	Role role = new Role();
     	role.setId(1L);
@@ -38,14 +37,8 @@ public class UserTest {
         user.setRoles(roles);
     }
 
-    @After
-    public void tearDown() throws Exception {
-        System.out.println("Test Completed");
-
-    }
-
     @Test
-    public void testUserDetailsHappyFlow() throws Exception {
+    public void testUserDetailsHappyFlow() {
     	Assert.assertEquals(EXPECTED_ID, user.getId());
         Assert.assertEquals(EXPECTED_USERNAME, user.getUsername());
         Assert.assertEquals(EXPECTED_PASSWD, user.getPassword());

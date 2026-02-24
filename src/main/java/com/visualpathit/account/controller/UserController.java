@@ -10,6 +10,8 @@ import com.visualpathit.account.validator.UserValidator;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,6 +23,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 /**{@author imrant}*/
 @Controller
 public class UserController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
+    private static final String SEPARATOR = "--------------------------------------------";
+
     @Autowired
     private UserService userService;
 
@@ -48,7 +53,7 @@ public class UserController {
         if (bindingResult.hasErrors()) {
             return "registration";
         }
-        System.out.println("User PWD:"+userForm.getPassword());
+	    LOGGER.info("User PWD: {}", userForm.getPassword());
         userService.save(userForm);
 
         securityService.autologin(userForm.getUsername(), userForm.getPasswordConfirm());
@@ -58,7 +63,7 @@ public class UserController {
     /** {@inheritDoc} */
     @RequestMapping(value = "/login", method = RequestMethod.GET)
     public final String login(final Model model, final String error, final String logout) {
-        System.out.println("Model data"+model.toString());
+	    LOGGER.info("Model data {}", model);
     	if (error != null){
             model.addAttribute("error", "Your username and password is invalid.");
         }
@@ -82,8 +87,7 @@ public class UserController {
     {	
    
         List<User> users = userService.getList();
-        //JSONObject jsonObject
-        System.out.println("All User Data:::" + users);
+	    LOGGER.info("All User Data:::{}", users);
         model.addAttribute("users", users);
         return "userList";
     }
@@ -91,33 +95,33 @@ public class UserController {
     @RequestMapping(value = "/users/{id}", method = RequestMethod.GET)
     public String getOneUser(@PathVariable(value="id") String id,Model model)
     {	
-    	String Result ="";
+        String result ="";
     	try{
     		if( id != null && MemcachedUtils.memcachedGetData(id)!= null){    			
     			User userData =  MemcachedUtils.memcachedGetData(id);
-    			Result ="Data is From Cache";
-    			System.out.println("--------------------------------------------");
-    			System.out.println("Data is From Cache !!");
-    			System.out.println("--------------------------------------------");
-    			System.out.println("Father ::: "+userData.getFatherName());
+        		result ="Data is From Cache";
+        		LOGGER.info(SEPARATOR);
+        		LOGGER.info("Data is From Cache !!");
+        		LOGGER.info(SEPARATOR);
+        		LOGGER.info("Father ::: {}", userData.getFatherName());
     			model.addAttribute("user", userData);
-    			model.addAttribute("Result", Result);
+        		model.addAttribute("Result", result);
     		}
     		else{
 	    		User user = userService.findById(Long.parseLong(id)); 
-	    		Result = MemcachedUtils.memcachedSetData(user,id);
-	    		if(Result == null ){
-	    			Result ="Memcached Connection Failure !!";
+        		result = MemcachedUtils.memcachedSetData(user,id);
+        		if(result == null ){
+        			result ="Memcached Connection Failure !!";
 	    		}
-	    		System.out.println("--------------------------------------------");
-    			System.out.println("Data is From Database");
-    			System.out.println("--------------------------------------------");
-		        System.out.println("Result ::: "+ Result);	       
+        		LOGGER.info(SEPARATOR);
+        		LOGGER.info("Data is From Database");
+        		LOGGER.info(SEPARATOR);
+        		LOGGER.info("Result ::: {}", result);	       
 		        model.addAttribute("user", user);
-		        model.addAttribute("Result", Result);
+        		model.addAttribute("Result", result);
     		}
     	} catch (Exception e) {    		
-    		System.out.println( e.getMessage() );
+        	LOGGER.error("Failed to load user {}", id, e);
 		}
         return "user";
     }
@@ -126,7 +130,7 @@ public class UserController {
     @RequestMapping(value = { "/user/{username}"} , method = RequestMethod.GET)
     public final String userUpdate(@PathVariable(value="username") String username,final Model model) {
     	User user = userService.findByUsername(username); 
-    	System.out.println("User Data:::" + user);
+        LOGGER.info("User Data:::{}", user);
     	model.addAttribute("user", user);
     	return "userUpdate";
     }
@@ -151,13 +155,12 @@ public class UserController {
     	user.setSkills(userForm.getSkills());
     	user.setWorkingExperience(userForm.getWorkingExperience());    	
     	userService.save(user); 
-    	/*model.addAttribute("user", user);*/
     	return "welcome";
     }
     
     @RequestMapping(value={"/user/rabbit"}, method={RequestMethod.GET})
     public String rabbitmqSetUp() { 
-    	System.out.println("Rabbit mq method is callled!!!");
+	    LOGGER.info("Rabbit mq method is callled!!!");
       for (int i = 0; i < 20; i++) {
         producerService.produceMessage(generateString());
       }
