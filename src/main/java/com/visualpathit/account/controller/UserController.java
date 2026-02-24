@@ -25,6 +25,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 public class UserController {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
     private static final String SEPARATOR = "--------------------------------------------";
+    private static final String MODEL_USER_ATTR = "user";
+    private static final String MODEL_RESULT_ATTR = "Result";
+    private static final String CACHE_HIT_MESSAGE = "Data is From Cache";
+    private static final String CACHE_HIT_LOG = "Data is From Cache !!";
+    private static final String DB_HIT_LOG = "Data is From Database";
+    private static final String MEMCACHED_FAILURE_MESSAGE = "Memcached Connection Failure !!";
 
     @Autowired
     private UserService userService;
@@ -53,7 +59,7 @@ public class UserController {
         if (bindingResult.hasErrors()) {
             return "registration";
         }
-	    LOGGER.info("User PWD: {}", userForm.getPassword());
+	    LOGGER.info("Registering user {}", userForm.getUsername());
         userService.save(userForm);
 
         securityService.autologin(userForm.getUsername(), userForm.getPasswordConfirm());
@@ -95,34 +101,33 @@ public class UserController {
     @RequestMapping(value = "/users/{id}", method = RequestMethod.GET)
     public String getOneUser(@PathVariable(value="id") String id,Model model)
     {	
-        String result ="";
-    	try{
-    		if( id != null && MemcachedUtils.memcachedGetData(id)!= null){    			
-    			User userData =  MemcachedUtils.memcachedGetData(id);
-        		result ="Data is From Cache";
-        		LOGGER.info(SEPARATOR);
-        		LOGGER.info("Data is From Cache !!");
-        		LOGGER.info(SEPARATOR);
-        		LOGGER.info("Father ::: {}", userData.getFatherName());
-    			model.addAttribute("user", userData);
-        		model.addAttribute("Result", result);
-    		}
-    		else{
-	    		User user = userService.findById(Long.parseLong(id)); 
-        		result = MemcachedUtils.memcachedSetData(user,id);
-        		if(result == null ){
-        			result ="Memcached Connection Failure !!";
-	    		}
-        		LOGGER.info(SEPARATOR);
-        		LOGGER.info("Data is From Database");
-        		LOGGER.info(SEPARATOR);
-        		LOGGER.info("Result ::: {}", result);	       
-		        model.addAttribute("user", user);
-        		model.addAttribute("Result", result);
-    		}
-    	} catch (Exception e) {    		
-        	LOGGER.error("Failed to load user {}", id, e);
-		}
+        if (id == null) {
+        	LOGGER.warn("User id is missing");
+        	return "user";
+        }
+
+        String result = "";
+        User cachedUser = MemcachedUtils.memcachedGetData(id);
+        if (cachedUser != null) {
+        	result = CACHE_HIT_MESSAGE;
+        	logDataSource(CACHE_HIT_LOG, cachedUser.getFatherName(), result);
+        	model.addAttribute(MODEL_USER_ATTR, cachedUser);
+        	model.addAttribute(MODEL_RESULT_ATTR, result);
+        	return "user";
+        }
+
+        try {
+        	User user = userService.findById(Long.parseLong(id));
+        	result = MemcachedUtils.memcachedSetData(user, id);
+        	if (result == null) {
+        		result = MEMCACHED_FAILURE_MESSAGE;
+        	}
+        	logDataSource(DB_HIT_LOG, user.getFatherName(), result);
+        	model.addAttribute(MODEL_USER_ATTR, user);
+        	model.addAttribute(MODEL_RESULT_ATTR, result);
+        } catch (NumberFormatException e) {
+        	LOGGER.warn("Invalid user id {}", id, e);
+        }
         return "user";
     }
     
@@ -131,7 +136,7 @@ public class UserController {
     public final String userUpdate(@PathVariable(value="username") String username,final Model model) {
     	User user = userService.findByUsername(username); 
         LOGGER.info("User Data:::{}", user);
-    	model.addAttribute("user", user);
+        model.addAttribute(MODEL_USER_ATTR, user);
     	return "userUpdate";
     }
     @RequestMapping(value = { "/user/{username}"} , method = RequestMethod.POST)
@@ -171,6 +176,14 @@ public class UserController {
       String uuid = UUID.randomUUID().toString();
       return "uuid = " + uuid;
     }
+
+        private void logDataSource(String dataSource, String fatherName, String result) {
+        	LOGGER.info(SEPARATOR);
+        	LOGGER.info(dataSource);
+        	LOGGER.info(SEPARATOR);
+        	LOGGER.info("Father ::: {}", fatherName);
+        	LOGGER.info("Result ::: {}", result);
+        }
     
 
     

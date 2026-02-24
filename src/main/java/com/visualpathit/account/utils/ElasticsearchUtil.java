@@ -16,18 +16,19 @@ import com.visualpathit.account.beans.Components;
 public class ElasticsearchUtil {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchUtil.class);
 	
-	private static Components object;
-    @Autowired
-    public void setComponents(Components object){
-    	ElasticsearchUtil.object = object;    	
-    	
-    }
-    public static TransportClient trannsportClient() {
+	private final Components components;
+
+	@Autowired
+	public ElasticsearchUtil(Components components) {
+		this.components = components;
+	}
+
+    public TransportClient transportClient() {
 	    LOGGER.info("elasticsearch client");
-    	String elasticsearchHost =object.getElasticsearchHost();
-    	String elasticsearchPort =object.getElasticsearchPort(); 
-    	String elasticsearchCluster =object.getElasticsearchCluster();
-    	String elasticsearchNode =object.getElasticsearchNode();
+	    String elasticsearchHost = components.getElasticsearchHost();
+	    String elasticsearchPort = components.getElasticsearchPort(); 
+	    String elasticsearchCluster = components.getElasticsearchCluster();
+	    String elasticsearchNode = components.getElasticsearchNode();
 	    LOGGER.info("elasticsearchHost ........{}", elasticsearchHost);
 	    LOGGER.info("elasticsearchPort ........{}", elasticsearchPort);
     	TransportClient client = null;

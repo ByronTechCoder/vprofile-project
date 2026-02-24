@@ -30,13 +30,16 @@ public class ElasticSearchController {
 
 	@Autowired
     private UserService userService;
+
+    @Autowired
+    private ElasticsearchUtil elasticsearchUtil;
     
     @RequestMapping(value="/user/elasticsearch", method=RequestMethod.GET)
     public String insert(final Model model) throws IOException {
     	List<User> users = userService.getList();
     	String result ="";
     	for (User user : users) {
-    	IndexResponse response = ElasticsearchUtil.trannsportClient().prepareIndex("users","user",  String.valueOf(user.getId()))
+        	IndexResponse response = elasticsearchUtil.transportClient().prepareIndex("users","user",  String.valueOf(user.getId()))
                 .setSource(jsonBuilder()
                         .startObject()
                         .field("name", user.getUsername())
@@ -60,7 +63,7 @@ public class ElasticSearchController {
 
     @RequestMapping(value="/rest/users/view/{id}", method=RequestMethod.GET)
     public String  view(@PathVariable final String id,final Model model) {
-        GetResponse getResponse = ElasticsearchUtil.trannsportClient().prepareGet("users", "user", id).get();
+        GetResponse getResponse = elasticsearchUtil.transportClient().prepareGet("users", "user", id).get();
 	    LOGGER.info("{}", getResponse.getSource());
         
         model.addAttribute("res", getResponse.getSource().get("name"));
@@ -79,7 +82,7 @@ public class ElasticSearchController {
                         .field("gender", "male")
                         .endObject());
         try {
-            UpdateResponse updateResponse = ElasticsearchUtil.trannsportClient().update(updateRequest).get();
+            UpdateResponse updateResponse = elasticsearchUtil.transportClient().update(updateRequest).get();
 	        LOGGER.info("{}", updateResponse.status());
             model.addAttribute("res", updateResponse.status());
             return "elasticeSearchRes";
@@ -94,7 +97,7 @@ public class ElasticSearchController {
     @RequestMapping(value="/rest/users/delete/{id}", method=RequestMethod.GET)
     public String delete(@PathVariable final String id,final Model model) {
 
-        DeleteResponse deleteResponse =ElasticsearchUtil.trannsportClient().prepareDelete("employee", "id", id).get();
+        DeleteResponse deleteResponse =elasticsearchUtil.transportClient().prepareDelete("employee", "id", id).get();
         LOGGER.info(deleteResponse.getResult().toString());
         model.addAttribute("res", deleteResponse.getResult().toString());
         return "elasticeSearchRes";
