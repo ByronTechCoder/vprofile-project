@@ -8,6 +8,11 @@ pipeline {
         maven "MAVEN3"
         jdk "OracleJDK8"
     }
+
+    parameters {
+        booleanParam(name: 'SKIP_SONAR', defaultValue: true, description: 'Skip Sonar analysis and quality gate')
+        booleanParam(name: 'SKIP_ANSIBLE', defaultValue: true, description: 'Skip Ansible deploy stage')
+    }
     
     environment {
         SNAP_REPO = 'vprofile-snapshot'
@@ -50,33 +55,39 @@ pipeline {
             }
         }
 
-        // stage('Sonar Analysis') {
-        //     environment {
-        //         scannerHome = tool "${SONARSCANNER}"
-        //     }
-        //     steps {
-        //        withSonarQubeEnv("${SONARSERVER}") {
-        //            sh '''${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=vprofile \
-        //            -Dsonar.projectName=vprofile \
-        //            -Dsonar.projectVersion=1.0 \
-        //            -Dsonar.sources=src/ \
-        //            -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
-        //            -Dsonar.junit.reportsPath=target/surefire-reports/ \
-        //            -Dsonar.jacoco.reportsPath=target/jacoco.exec \
-        //            -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
-        //      }
-        //     }
-        // }
+        stage('Sonar Analysis') {
+            when {
+                expression { return !params.SKIP_SONAR }
+            }
+            environment {
+                scannerHome = tool "${SONARSCANNER}"
+            }
+            steps {
+               withSonarQubeEnv("${SONARSERVER}") {
+                   sh '''${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=vprofile \
+                   -Dsonar.projectName=vprofile \
+                   -Dsonar.projectVersion=1.0 \
+                   -Dsonar.sources=src/ \
+                   -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
+                   -Dsonar.junit.reportsPath=target/surefire-reports/ \
+                   -Dsonar.jacoco.reportsPath=target/jacoco.exec \
+                   -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
+              }
+            }
+        }
 
-        // stage("Quality Gate") {
-        //     steps {
-        //         timeout(time: 1, unit: 'HOURS') {
-        //             // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
-        //             // true = set pipeline to UNSTABLE, false = don't
-        //             waitForQualityGate abortPipeline: true
-        //         }
-        //     }
-        // }
+        stage("Quality Gate") {
+            when {
+                expression { return !params.SKIP_SONAR }
+            }
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
+                    // true = set pipeline to UNSTABLE, false = don't
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
 
         stage("UploadArtifact"){
             steps{
